@@ -1,0 +1,3511 @@
+[
+  {
+    "name": "solidworks_create_sketch",
+    "title": null,
+    "description": "Create a new sketch on a specified plane. If no part exists, creates one automatically. The result includes sketchFrame: the sketch origin and X/Y axis directions in MODEL space. IMPORTANT for face sketches: (1) sketch axes can be mirrored or rotated relative to model axes (e.g. on a back-facing face sketch X = model -X; on a top face sketch Y = model -Z); (2) the sketch ORIGIN is the model origin projected onto the face — NOT the face center. The result therefore also includes faceCenter.sketch_mm — use it as the layout datum for centered geometry. Convert other model coordinates with: sketch_x = xAxisModel . (target - originModel_mm), sketch_y = yAxisModel . (target - originModel_mm).",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "plane": {
+          "type": "string",
+          "description": "Reference plane name. Standard planes: 'Front', 'Top', 'Right'. Also accepts custom reference plane names like 'Plane1', 'Plane2', etc."
+        },
+        "faceX": {
+          "type": "number",
+          "description": "X coordinate (mm) of a point on the solid face to sketch on. Use with faceY and faceZ to create a sketch on an existing solid face instead of a reference plane."
+        },
+        "faceY": {
+          "type": "number",
+          "description": "Y coordinate (mm) of a point on the solid face to sketch on."
+        },
+        "faceZ": {
+          "type": "number",
+          "description": "Z coordinate (mm) of a point on the solid face to sketch on."
+        }
+      }
+    },
+    "outputSchema": null,
+    "icons": null,
+    "annotations": null,
+    "meta": null,
+    "execution": null
+  },
+  {
+    "name": "solidworks_sketch_rectangle",
+    "title": null,
+    "description": "Draw a rectangle in the active sketch. Can specify absolute position or position relative to the last created shape.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "width": {
+          "type": "number",
+          "description": "Width of rectangle (mm)"
+        },
+        "height": {
+          "type": "number",
+          "description": "Height of rectangle (mm)"
+        },
+        "centerX": {
+          "type": "number",
+          "description": "Absolute X position of center (mm)"
+        },
+        "centerY": {
+          "type": "number",
+          "description": "Absolute Y position of center (mm)"
+        },
+        "relativeX": {
+          "type": "number",
+          "description": "X offset from last shape's right edge (mm)"
+        },
+        "relativeY": {
+          "type": "number",
+          "description": "Y offset from last shape's top edge (mm)"
+        },
+        "spacing": {
+          "type": "number",
+          "description": "Spacing from last shape (mm). Automatically calculates position."
+        },
+        "x1": {
+          "type": "number",
+          "description": "Alternative: First corner X (mm)"
+        },
+        "y1": {
+          "type": "number",
+          "description": "Alternative: First corner Y (mm)"
+        },
+        "x2": {
+          "type": "number",
+          "description": "Alternative: Opposite corner X (mm)"
+        },
+        "y2": {
+          "type": "number",
+          "description": "Alternative: Opposite corner Y (mm)"
+        }
+      }
+    },
+    "outputSchema": null,
+    "icons": null,
+    "annotations": null,
+    "meta": null,
+    "execution": null
+  },
+  {
+    "name": "solidworks_sketch_circle",
+    "title": null,
+    "description": "Draw a circle in the active sketch. Can specify absolute position or relative to last shape.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "centerX": {
+          "type": "number",
+          "description": "Absolute center X position (mm)"
+        },
+        "centerY": {
+          "type": "number",
+          "description": "Absolute center Y position (mm)"
+        },
+        "radius": {
+          "type": "number",
+          "description": "Radius (mm)"
+        },
+        "relativeX": {
+          "type": "number",
+          "description": "X offset from last shape (mm)"
+        },
+        "relativeY": {
+          "type": "number",
+          "description": "Y offset from last shape (mm)"
+        },
+        "spacing": {
+          "type": "number",
+          "description": "Spacing from last shape (mm)"
+        }
+      },
+      "required": [
+        "radius"
+      ]
+    },
+    "outputSchema": null,
+    "icons": null,
+    "annotations": null,
+    "meta": null,
+    "execution": null
+  },
+  {
+    "name": "solidworks_sketch_profile",
+    "title": null,
+    "description": "Draw an entire chained profile in ONE call: a sequence of connected segments (LINE, TANGENT_ARC, ARC) starting at startX/startY, each continuing from the previous endpoint, optionally auto-closed, with optional corner fillets applied afterward (exact tangency — no coordinate math needed). STRONGLY PREFERRED over many sketch_line/sketch_arc calls for complex drawing profiles: one call instead of 10-20.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "startX": {
+          "type": "number",
+          "description": "Profile start X (mm)"
+        },
+        "startY": {
+          "type": "number",
+          "description": "Profile start Y (mm)"
+        },
+        "segments": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": [
+                  "LINE",
+                  "TANGENT_ARC",
+                  "ARC"
+                ],
+                "description": "Segment kind (default LINE)"
+              },
+              "x": {
+                "type": "number",
+                "description": "Segment end X (mm)"
+              },
+              "y": {
+                "type": "number",
+                "description": "Segment end Y (mm)"
+              },
+              "cx": {
+                "type": "number",
+                "description": "ARC only: center X (mm)"
+              },
+              "cy": {
+                "type": "number",
+                "description": "ARC only: center Y (mm)"
+              },
+              "direction": {
+                "type": "integer",
+                "description": "ARC only: 1=CCW, -1=CW (default 1)"
+              },
+              "tangentType": {
+                "type": "integer",
+                "description": "TANGENT_ARC only: swTangentArcTypes (default 1=forward)"
+              }
+            },
+            "required": [
+              "x",
+              "y"
+            ]
+          },
+          "description": "Connected segments; each starts where the previous ended"
+        },
+        "close": {
+          "type": "boolean",
+          "description": "Close back to start with a line if not already closed (default true)"
+        },
+        "cornerFillets": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "x": {
+                "type": "number",
+                "description": "Corner vertex X (mm)"
+              },
+              "y": {
+                "type": "number",
+                "description": "Corner vertex Y (mm)"
+              },
+              "radius": {
+                "type": "number",
+                "description": "Fillet radius (mm)"
+              }
+            },
+            "required": [
+              "x",
+              "y",
+              "radius"
+            ]
+          },
+          "description": "Sketch fillets applied at profile corners after drawing"
+        }
+      },
+      "required": [
+        "startX",
+        "startY",
+        "segments"
+      ]
+    },
+    "outputSchema": null,
+    "icons": null,
+    "annotations": null,
+    "meta": null,
+    "execution": null
+  },
+  {
+    "name": "solidworks_sketch_fillet",
+    "title": null,
+    "description": "Round a corner of EXISTING sketch geometry with an exact tangent arc — SolidWorks computes the tangency; never hand-calculate fillet arcs. Select the corner by the vertex where the two segments meet.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "x": {
+          "type": "number",
+          "description": "Corner vertex X (mm) — the shared endpoint of two segments"
+        },
+        "y": {
+          "type": "number",
+          "description": "Corner vertex Y (mm)"
+        },
+        "radius": {
+          "type": "number",
+          "description": "Fillet radius (mm)"
+        }
+      },
+      "required": [
+        "x",
+        "y",
+        "radius"
+      ]
+    },
+    "outputSchema": null,
+    "icons": null,
+    "annotations": null,
+    "meta": null,
+    "execution": null
+  },
+  {
+    "name": "solidworks_sketch_offset",
+    "title": null,
+    "description": "Offset existing sketch geometry by a distance — THE tool for hollow profiles, wall thicknesses, and 'offset from outer edge' hints. Select any point on the geometry; chain=true (default) offsets the whole connected chain. Negative distance offsets to the other side.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "x": {
+          "type": "number",
+          "description": "Point on the segment/chain to offset (mm)"
+        },
+        "y": {
+          "type": "number",
+          "description": "Point on the segment/chain to offset (mm)"
+        },
+        "distance": {
+          "type": "number",
+          "description": "Offset distance (mm); negative = other side"
+        },
+        "chain": {
+          "type": "boolean",
+          "description": "Offset the whole connected chain (default true)"
+        }
+      },
+      "required": [
+        "x",
+        "y",
+        "distance"
+      ]
+    },
+    "outputSchema": null,
+    "icons": null,
+    "annotations": null,
+    "meta": null,
+    "execution": null
+  },
+  {
+    "name": "solidworks_sketch_line",
+    "title": null,
+    "description": "Draw a line segment in the active sketch between two points.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "x1": {
+          "type": "number",
+          "description": "Start point X (mm)"
+        },
+        "y1": {
+          "type": "number",
+          "description": "Start point Y (mm)"
+        },
+        "x2": {
+          "type": "number",
+          "description": "End point X (mm)"
+        },
+        "y2": {
+          "type": "number",
+          "description": "End point Y (mm)"
+        }
+      },
+      "required": [
+        "x1",
+        "y1",
+        "x2",
+        "y2"
+      ]
+    },
+    "outputSchema": null,
+    "icons": null,
+    "annotations": null,
+    "meta": null,
+    "execution": null
+  },
+  {
+    "name": "solidworks_sketch_centerline",
+    "title": null,
+    "description": "Draw a construction centerline in the active sketch. Centerlines are used as axes for mirror/pattern operations and do not form part of the sketch profile.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "x1": {
+          "type": "number",
+          "description": "Start point X (mm)"
+        },
+        "y1": {
+          "type": "number",
+          "description": "Start point Y (mm)"
+        },
+        "x2": {
+          "type": "number",
+          "description": "End point X (mm)"
+        },
+        "y2": {
+          "type": "number",
+          "description": "End point Y (mm)"
+        }
+      },
+      "required": [
+        "x1",
+        "y1",
+        "x2",
+        "y2"
+      ]
+    },
+    "outputSchema": null,
+    "icons": null,
+    "annotations": null,
+    "meta": null,
+    "execution": null
+  },
+  {
+    "name": "solidworks_sketch_arc",
+    "title": null,
+    "description": "Draw an arc in the active sketch. Supports 3-point mode (start, end, midpoint on arc) or center-point mode (center, start endpoint, end endpoint).",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "mode": {
+          "type": "string",
+          "enum": [
+            "3point",
+            "center"
+          ],
+          "description": "Arc creation mode. '3point': define by start, end, and midpoint on arc. 'center': define by center point and two endpoints. Default: '3point'"
+        },
+        "x1": {
+          "type": "number",
+          "description": "Start point X (mm) - used in both modes"
+        },
+        "y1": {
+          "type": "number",
+          "description": "Start point Y (mm) - used in both modes"
+        },
+        "x2": {
+          "type": "number",
+          "description": "End point X (mm) - used in both modes"
+        },
+        "y2": {
+          "type": "number",
+          "description": "End point Y (mm) - used in both modes"
+        },
+        "x3": {
+          "type": "number",
+          "description": "Third point X (mm) - 3point mode only: midpoint on arc"
+        },
+        "y3": {
+          "type": "number",
+          "description": "Third point Y (mm) - 3point mode only: midpoint on arc"
+        },
+        "centerX": {
+          "type": "number",
+          "description": "Arc center X (mm) - center mode only"
+        },
+        "centerY": {
+          "type": "number",
+          "description": "Arc center Y (mm) - center mode only"
+        }
+      }
+    },
+    "outputSchema": null,
+    "icons": null,
+    "annotations": null,
+    "meta": null,
+    "execution": null
+  },
+  {
+    "name": "solidworks_sketch_spline",
+    "title": null,
+    "description": "Draw a spline curve through a series of points in the active sketch.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "points": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "x": {
+                "type": "number",
+                "description": "X coordinate (mm)"
+              },
+              "y": {
+                "type": "number",
+                "description": "Y coordinate (mm)"
+              }
+            },
+            "required": [
+              "x",
+              "y"
+            ]
+          },
+          "minItems": 2,
+          "description": "Array of points the spline passes through (mm)"
+        }
+      },
+      "required": [
+        "points"
+      ]
+    },
+    "outputSchema": null,
+    "icons": null,
+    "annotations": null,
+    "meta": null,
+    "execution": null
+  },
+  {
+    "name": "solidworks_sketch_ellipse",
+    "title": null,
+    "description": "Draw an ellipse in the active sketch defined by center, semi-major and semi-minor axis lengths, and optional rotation angle.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "centerX": {
+          "type": "number",
+          "description": "Center X position (mm)"
+        },
+        "centerY": {
+          "type": "number",
+          "description": "Center Y position (mm)"
+        },
+        "majorRadius": {
+          "type": "number",
+          "description": "Semi-major axis length (mm)"
+        },
+        "minorRadius": {
+          "type": "number",
+          "description": "Semi-minor axis length (mm)"
+        },
+        "angle": {
+          "type": "number",
+          "description": "Rotation angle of major axis in degrees counterclockwise from X-axis. Default: 0"
+        }
+      },
+      "required": [
+        "centerX",
+        "centerY",
+        "majorRadius",
+        "minorRadius"
+      ]
+    },
+    "outputSchema": null,
+    "icons": null,
+    "annotations": null,
+    "meta": null,
+    "execution": null
+  },
+  {
+    "name": "solidworks_sketch_polygon",
+    "title": null,
+    "description": "Draw a regular polygon in the active sketch. Supports relative positioning from last shape.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "centerX": {
+          "type": "number",
+          "description": "Absolute center X position (mm)"
+        },
+        "centerY": {
+          "type": "number",
+          "description": "Absolute center Y position (mm)"
+        },
+        "radius": {
+          "type": "number",
+          "description": "Distance from center to vertex (mm)"
+        },
+        "numSides": {
+          "type": "integer",
+          "description": "Number of sides (3-100)",
+          "minimum": 3,
+          "maximum": 100
+        },
+        "inscribed": {
+          "type": "boolean",
+          "description": "If true, radius is the inscribed circle radius. Default: false (circumscribed)"
+        },
+        "relativeX": {
+          "type": "number",
+          "description": "X offset from last shape (mm)"
+        },
+        "relativeY": {
+          "type": "number",
+          "description": "Y offset from last shape (mm)"
+        },
+        "spacing": {
+          "type": "number",
+          "description": "Spacing from last shape (mm)"
+        }
+      },
+      "required": [
+        "radius",
+        "numSides"
+      ]
+    },
+    "outputSchema": null,
+    "icons": null,
+    "annotations": null,
+    "meta": null,
+    "execution": null
+  },
+  {
+    "name": "solidworks_sketch_slot",
+    "title": null,
+    "description": "Draw a straight slot shape in the active sketch defined by two center points and a width.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "x1": {
+          "type": "number",
+          "description": "First center point X (mm)"
+        },
+        "y1": {
+          "type": "number",
+          "description": "First center point Y (mm)"
+        },
+        "x2": {
+          "type": "number",
+          "description": "Second center point X (mm)"
+        },
+        "y2": {
+          "type": "number",
+          "description": "Second center point Y (mm)"
+        },
+        "width": {
+          "type": "number",
+          "description": "Total slot width - diameter of end caps (mm)"
+        }
+      },
+      "required": [
+        "x1",
+        "y1",
+        "x2",
+        "y2",
+        "width"
+      ]
+    },
+    "outputSchema": null,
+    "icons": null,
+    "annotations": null,
+    "meta": null,
+    "execution": null
+  },
+  {
+    "name": "solidworks_sketch_point",
+    "title": null,
+    "description": "Create a sketch point in the active sketch. Useful as a construction reference for dimensions and constraints.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "x": {
+          "type": "number",
+          "description": "X position (mm)"
+        },
+        "y": {
+          "type": "number",
+          "description": "Y position (mm)"
+        }
+      },
+      "required": [
+        "x",
+        "y"
+      ]
+    },
+    "outputSchema": null,
+    "icons": null,
+    "annotations": null,
+    "meta": null,
+    "execution": null
+  },
+  {
+    "name": "solidworks_sketch_text",
+    "title": null,
+    "description": "Insert sketch text in the active sketch.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "x": {
+          "type": "number",
+          "description": "X position (mm)"
+        },
+        "y": {
+          "type": "number",
+          "description": "Y position (mm)"
+        },
+        "text": {
+          "type": "string",
+          "description": "The text string to insert"
+        },
+        "height": {
+          "type": "number",
+          "description": "Font height (mm)"
+        },
+        "angle": {
+          "type": "number",
+          "description": "Rotation angle in degrees. Default: 0"
+        }
+      },
+      "required": [
+        "x",
+        "y",
+        "text",
+        "height"
+      ]
+    },
+    "outputSchema": null,
+    "icons": null,
+    "annotations": null,
+    "meta": null,
+    "execution": null
+  },
+  {
+    "name": "solidworks_sketch_dimension",
+    "title": null,
+    "description": "Add a driving dimension to sketch entities — the cornerstone of reusable, modifiable models. Select 1 entity for a single dimension (line length, circle diameter, arc radius), or 2 entities for a between-dimension. The dimension text is placed at (dimX, dimY); pass 'value' to set the driving value immediately. Dimensions are named D1@SketchN, D2@SketchN... in creation order and can be re-driven later with set_parameter (parametric modification). Fully defined sketches (all geometry dimensioned/anchored to the origin) rebuild predictably; get_state reports each sketch's constrainedStatus.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "entityPoints": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "x": {
+                "type": "number",
+                "description": "X coordinate on/near entity (mm)"
+              },
+              "y": {
+                "type": "number",
+                "description": "Y coordinate on/near entity (mm)"
+              }
+            },
+            "required": [
+              "x",
+              "y"
+            ]
+          },
+          "minItems": 1,
+          "maxItems": 2,
+          "description": "Points to select entities to dimension. 1 point for a single entity (line length, arc radius), 2 points for a between-dimension (distance between two entities)."
+        },
+        "entityTypes": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "SKETCHSEGMENT",
+              "SKETCHPOINT",
+              "EXTSKETCHPOINT"
+            ]
+          },
+          "description": "Selection type for each entity point. Default: SKETCHSEGMENT."
+        },
+        "dimX": {
+          "type": "number",
+          "description": "X position (mm) for the dimension text placement"
+        },
+        "dimY": {
+          "type": "number",
+          "description": "Y position (mm) for the dimension text placement"
+        },
+        "value": {
+          "type": "number",
+          "description": "Optional driving value to set on the dimension (mm for linear, degrees for angular). If provided, the dimension becomes a driving dimension that constrains the geometry to this value. The dimension type is auto-detected."
+        }
+      },
+      "required": [
+        "entityPoints",
+        "dimX",
+        "dimY"
+      ]
+    },
+    "outputSchema": null,
+    "icons": null,
+    "annotations": null,
+    "meta": null,
+    "execution": null
+  },
+  {
+    "name": "solidworks_set_dimension_value",
+    "title": null,
+    "description": "Set the value of an existing dimension by selecting it at its text location. Changes the driving value of the dimension, which updates the sketch geometry accordingly.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "dimX": {
+          "type": "number",
+          "description": "X coordinate (mm) on/near the dimension text to select"
+        },
+        "dimY": {
+          "type": "number",
+          "description": "Y coordinate (mm) on/near the dimension text to select"
+        },
+        "value": {
+          "type": "number",
+          "description": "New dimension value (mm for linear, degrees for angular dimensions)"
+        }
+      },
+      "required": [
+        "dimX",
+        "dimY",
+        "value"
+      ]
+    },
+    "outputSchema": null,
+    "icons": null,
+    "annotations": null,
+    "meta": null,
+    "execution": null
+  },
+  {
+    "name": "solidworks_sketch_constraint",
+    "title": null,
+    "description": "Add a geometric constraint (relation) between selected sketch entities.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "constraintType": {
+          "type": "string",
+          "enum": [
+            "COINCIDENT",
+            "CONCENTRIC",
+            "TANGENT",
+            "PARALLEL",
+            "PERPENDICULAR",
+            "HORIZONTAL",
+            "VERTICAL",
+            "EQUAL",
+            "SYMMETRIC",
+            "MIDPOINT",
+            "COLLINEAR",
+            "CORADIAL"
+          ],
+          "description": "Type of geometric constraint to apply"
+        },
+        "entityPoints": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "x": {
+                "type": "number",
+                "description": "X coordinate on/near entity (mm)"
+              },
+              "y": {
+                "type": "number",
+                "description": "Y coordinate on/near entity (mm)"
+              }
+            },
+            "required": [
+              "x",
+              "y"
+            ]
+          },
+          "minItems": 1,
+          "maxItems": 3,
+          "description": "Points to select entities. 1 for single-entity constraints (Horizontal, Vertical), 2 for pair constraints (Parallel, Equal), 3 for Symmetric (entity, entity, centerline)."
+        },
+        "entityTypes": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "SKETCHSEGMENT",
+              "SKETCHPOINT",
+              "EXTSKETCHPOINT"
+            ]
+          },
+          "description": "Selection type for each entity point. Default: SKETCHSEGMENT."
+        }
+      },
+      "required": [
+        "constraintType",
+        "entityPoints"
+      ]
+    },
+    "outputSchema": null,
+    "icons": null,
+    "annotations": null,
+    "meta": null,
+    "execution": null
+  },
+  {
+    "name": "solidworks_sketch_toggle_construction",
+    "title": null,
+    "description": "Toggle the construction geometry flag on a selected sketch entity. Construction geometry is for reference only and does not form part of the extrusion profile.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "x": {
+          "type": "number",
+          "description": "X coordinate on/near entity to toggle (mm)"
+        },
+        "y": {
+          "type": "number",
+          "description": "Y coordinate on/near entity to toggle (mm)"
+        }
+      },
+      "required": [
+        "x",
+        "y"
+      ]
+    },
+    "outputSchema": null,
+    "icons": null,
+    "annotations": null,
+    "meta": null,
+    "execution": null
+  },
+  {
+    "name": "solidworks_get_last_shape_info",
+    "title": null,
+    "description": "Get information about the last created shape (position, size, bounding box)",
+    "inputSchema": {
+      "type": "object",
+      "properties": {}
+    },
+    "outputSchema": null,
+    "icons": null,
+    "annotations": null,
+    "meta": null,
+    "execution": null
+  },
+  {
+    "name": "solidworks_exit_sketch",
+    "title": null,
+    "description": "Exit sketch edit mode",
+    "inputSchema": {
+      "type": "object",
+      "properties": {}
+    },
+    "outputSchema": null,
+    "icons": null,
+    "annotations": null,
+    "meta": null,
+    "execution": null
+  },
+  {
+    "name": "solidworks_new_part",
+    "title": null,
+    "description": "Create a new blank part document. Use this to start a completely new design.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {}
+    },
+    "outputSchema": null,
+    "icons": null,
+    "annotations": null,
+    "meta": null,
+    "execution": null
+  },
+  {
+    "name": "solidworks_create_extrusion",
+    "title": null,
+    "description": "Extrude the current sketch to create a 3D feature",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "depth": {
+          "type": "number",
+          "description": "Extrusion depth (mm)"
+        },
+        "reverse": {
+          "type": "boolean",
+          "default": false,
+          "description": "Reverse direction"
+        },
+        "endCondition": {
+          "type": "string",
+          "enum": [
+            "BLIND",
+            "THROUGH_ALL"
+          ],
+          "description": "End condition. BLIND (default): extrude to depth. THROUGH_ALL: through entire body.",
+          "default": "BLIND"
+        },
+        "merge": {
+          "type": "boolean",
+          "default": true,
+          "description": "Merge with existing bodies (default true). Set false to create a SEPARATE body for multi-body workflows (then use combine_bodies)."
+        }
+      },
+      "required": [
+        "depth"
+      ]
+    },
+    "outputSchema": null,
+    "icons": null,
+    "annotations": null,
+    "meta": null,
+    "execution": null
+  },
+  {
+    "name": "solidworks_combine_bodies",
+    "title": null,
+    "description": "Combine the solid bodies of a multi-body part: ADD (union all), SUBTRACT (remove other bodies from the main body), or COMMON (keep only the shared/intersecting volume). Create separate bodies first with create_extrusion merge=false. Body indices follow creation order (0 = first body).",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "operation": {
+          "type": "string",
+          "enum": [
+            "ADD",
+            "SUBTRACT",
+            "COMMON"
+          ],
+          "description": "Boolean operation"
+        },
+        "mainBodyIndex": {
+          "type": "integer",
+          "description": "SUBTRACT only: index of the body to keep (others are subtracted from it). Default 0."
+        }
+      },
+      "required": [
+        "operation"
+      ]
+    },
+    "outputSchema": null,
+    "icons": null,
+    "annotations": null,
+    "meta": null,
+    "execution": null
+  },
+  {
+    "name": "solidworks_create_cut_extrusion",
+    "title": null,
+    "description": "Cut-extrude the current sketch to remove material from an existing 3D body",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "depth": {
+          "type": "number",
+          "description": "Cut depth (mm)"
+        },
+        "reverse": {
+          "type": "boolean",
+          "default": false,
+          "description": "Reverse cut direction"
+        },
+        "endCondition": {
+          "type": "string",
+          "enum": [
+            "BLIND",
+            "THROUGH_ALL"
+          ],
+          "description": "End condition. BLIND (default): cut to depth. THROUGH_ALL: cut through entire body.",
+          "default": "BLIND"
+        }
+      },
+      "required": [
+        "depth"
+      ]
+    },
+    "outputSchema": null,
+    "icons": null,
+    "annotations": null,
+    "meta": null,
+    "execution": null
+  },
+  {
+    "name": "solidworks_set_material",
+    "title": null,
+    "description": "Assign a material to the active part (sets density for mass calculations). Common SOLIDWORKS Materials names: '6061 Alloy', '1060 Alloy', 'Alloy Steel', 'Plain Carbon Steel', 'AISI 1020', 'Cast Alloy Steel', 'Brass', 'Copper', 'ABS', 'Gray Cast Iron', 'AISI 304'. Required before answering mass questions — without a material, mass uses the default 1000 kg/m^3.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "material": {
+          "type": "string",
+          "description": "Material name exactly as it appears in the SOLIDWORKS Materials database (e.g. '6061 Alloy')"
+        },
+        "configuration": {
+          "type": "string",
+          "description": "Optional configuration name (default: active configuration)"
+        }
+      },
+      "required": [
+        "material"
+      ]
+    },
+    "outputSchema": null,
+    "icons": null,
+    "annotations": null,
+    "meta": null,
+    "execution": null
+  },
+  {
+    "name": "solidworks_set_parameter",
+    "title": null,
+    "description": "Set a model dimension by its parameter name (e.g. 'D1@Boss-Extrude1' for an extrusion depth, 'D1@Sketch1' for a sketch dimension, 'D1@Cut-Extrude1' for a cut depth). The model is rebuilt. Use this for 'modify the part' questions — changing a feature's driving dimension parametrically updates all downstream features.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "parameter": {
+          "type": "string",
+          "description": "Full parameter name: <DimName>@<FeatureOrSketchName> (e.g. 'D1@Boss-Extrude1')"
+        },
+        "value": {
+          "type": "number",
+          "description": "New value (mm for lengths, degrees for angles)"
+        },
+        "unit": {
+          "type": "string",
+          "enum": [
+            "mm",
+            "deg"
+          ],
+          "description": "Unit of value (default mm)"
+        }
+      },
+      "required": [
+        "parameter",
+        "value"
+      ]
+    },
+    "outputSchema": null,
+    "icons": null,
+    "annotations": null,
+    "meta": null,
+    "execution": null
+  },
+  {
+    "name": "solidworks_get_mass_properties",
+    "title": null,
+    "description": "Evaluate and return mass properties of the active part: mass (kg and grams), volume, surface area, center of mass, and moments of inertia. Assign a material first (set_material) for accurate mass. Pass coordinateSystem to get the center of mass relative to a created coordinate system instead of the model origin.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "coordinateSystem": {
+          "type": "string",
+          "description": "Optional: name or ref ID of a coordinate system feature (e.g. 'Coordinate System1' or 'ref:Coordinate System1'). Center of mass is reported relative to it."
+        }
+      }
+    },
+    "outputSchema": null,
+    "icons": null,
+    "annotations": null,
+    "meta": null,
+    "execution": null
+  },
+  {
+    "name": "solidworks_suppress_feature",
+    "title": null,
+    "description": "Suppress or unsuppress a feature by name or ID (feat:...). Suppressed features are excluded from the model and its mass properties until unsuppressed — the standard 'remove this feature' operation for modification questions.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "feature": {
+          "type": "string",
+          "description": "Feature name or feat: ID (e.g. 'Fillet1', 'feat:Cut-Extrude1')"
+        },
+        "suppress": {
+          "type": "boolean",
+          "description": "true = suppress, false = unsuppress"
+        }
+      },
+      "required": [
+        "feature",
+        "suppress"
+      ]
+    },
+    "outputSchema": null,
+    "icons": null,
+    "annotations": null,
+    "meta": null,
+    "execution": null
+  },
+  {
+    "name": "solidworks_delete_feature",
+    "title": null,
+    "description": "Permanently delete a feature by name or ID (feat:...), including its child features. Prefer suppress_feature when the change might need to be reverted.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "feature": {
+          "type": "string",
+          "description": "Feature name or feat: ID"
+        }
+      },
+      "required": [
+        "feature"
+      ]
+    },
+    "outputSchema": null,
+    "icons": null,
+    "annotations": null,
+    "meta": null,
+    "execution": null
+  },
+  {
+    "name": "solidworks_list_features",
+    "title": null,
+    "description": "List all features in the feature tree of the active part. Returns feature names and types. Useful for discovering feature names needed by pattern, mirror, and other operations.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {}
+    },
+    "outputSchema": null,
+    "icons": null,
+    "annotations": null,
+    "meta": null,
+    "execution": null
+  },
+  {
+    "name": "solidworks_list_parameters",
+    "title": null,
+    "description": "List every driving dimension (parameter) in the active document with its full name (e.g. 'D1@Sketch1', 'D1@Boss-Extrude1'), current value, unit, and owning feature. Use these names with set_parameter / set_config_parameter / equations — never guess dimension names.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "feature": {
+          "type": "string",
+          "description": "Optional feature name or feat: ID to list only that feature's parameters"
+        }
+      }
+    },
+    "outputSchema": null,
+    "icons": null,
+    "annotations": null,
+    "meta": null,
+    "execution": null
+  },
+  {
+    "name": "solidworks_revolve",
+    "title": null,
+    "description": "Revolve the current sketch around a centerline axis to create a solid of revolution. The sketch MUST contain a centerline that serves as the revolve axis.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "angle": {
+          "type": "number",
+          "description": "Revolve angle in degrees (default: 360 for full revolution)",
+          "default": 360
+        },
+        "reverse": {
+          "type": "boolean",
+          "description": "Reverse revolve direction (default: false)",
+          "default": false
+        }
+      }
+    },
+    "outputSchema": null,
+    "icons": null,
+    "annotations": null,
+    "meta": null,
+    "execution": null
+  },
+  {
+    "name": "solidworks_sweep",
+    "title": null,
+    "description": "Create a swept boss/base by sweeping a profile sketch along a path sketch. Both sketches must already exist. The profile sketch defines the cross-section shape and the path sketch defines the sweep trajectory.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "profileSketch": {
+          "type": "string",
+          "description": "Name of the profile sketch (cross-section), e.g. 'Sketch1'"
+        },
+        "pathSketch": {
+          "type": "string",
+          "description": "Name of the path sketch (trajectory), e.g. 'Sketch2'"
+        }
+      },
+      "required": [
+        "profileSketch",
+        "pathSketch"
+      ]
+    },
+    "outputSchema": null,
+    "icons": null,
+    "annotations": null,
+    "meta": null,
+    "execution": null
+  },
+  {
+    "name": "solidworks_loft",
+    "title": null,
+    "description": "Create a lofted boss/base by blending between two or more profile sketches. The profiles should be closed sketches on different planes. They are connected in the order provided. Workflow: create_sketch on Front plane, draw profile, exit_sketch (returns sketch name); create ref_plane offset from Front (returns plane name e.g. 'Plane1'); create_sketch on that plane name, draw second profile, exit_sketch; then call loft with the sketch names.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "profileSketches": {
+          "type": "array",
+          "description": "Ordered array of profile sketch names to loft between, e.g. ['Sketch1', 'Sketch2', 'Sketch3']",
+          "items": {
+            "type": "string"
+          },
+          "minItems": 2
+        }
+      },
+      "required": [
+        "profileSketches"
+      ]
+    },
+    "outputSchema": null,
+    "icons": null,
+    "annotations": null,
+    "meta": null,
+    "execution": null
+  },
+  {
+    "name": "solidworks_boundary_boss",
+    "title": null,
+    "description": "Create a boundary boss/base feature from multiple profile sketches with optional guide curves. Similar to loft but with more control over surface curvature.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "profiles": {
+          "type": "array",
+          "description": "Ordered array of direction 1 profile sketch names",
+          "items": {
+            "type": "string"
+          },
+          "minItems": 2
+        },
+        "guideCurves": {
+          "type": "array",
+          "description": "Optional array of direction 2 guide curve sketch names",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "profiles"
+      ]
+    },
+    "outputSchema": null,
+    "icons": null,
+    "annotations": null,
+    "meta": null,
+    "execution": null
+  },
+  {
+    "name": "solidworks_cut_revolve",
+    "title": null,
+    "description": "Create a revolved cut by revolving the current sketch around a centerline axis to remove material. The sketch MUST contain a centerline that serves as the revolve axis.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "angle": {
+          "type": "number",
+          "description": "Revolve angle in degrees (default: 360 for full revolution)",
+          "default": 360
+        },
+        "reverse": {
+          "type": "boolean",
+          "description": "Reverse revolve direction (default: false)",
+          "default": false
+        }
+      }
+    },
+    "outputSchema": null,
+    "icons": null,
+    "annotations": null,
+    "meta": null,
+    "execution": null
+  },
+  {
+    "name": "solidworks_cut_sweep",
+    "title": null,
+    "description": "Create a swept cut by sweeping a profile sketch along a path sketch to remove material. Both sketches must already exist.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "profileSketch": {
+          "type": "string",
+          "description": "Name of the profile sketch (cross-section), e.g. 'Sketch1'"
+        },
+        "pathSketch": {
+          "type": "string",
+          "description": "Name of the path sketch (trajectory), e.g. 'Sketch2'"
+        }
+      },
+      "required": [
+        "profileSketch",
+        "pathSketch"
+      ]
+    },
+    "outputSchema": null,
+    "icons": null,
+    "annotations": null,
+    "meta": null,
+    "execution": null
+  },
+  {
+    "name": "solidworks_cut_loft",
+    "title": null,
+    "description": "Create a lofted cut by blending between two or more profile sketches to remove material. The profiles should be closed sketches on different planes.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "profileSketches": {
+          "type": "array",
+          "description": "Ordered array of profile sketch names to loft between, e.g. ['Sketch1', 'Sketch2']",
+          "items": {
+            "type": "string"
+          },
+          "minItems": 2
+        }
+      },
+      "required": [
+        "profileSketches"
+      ]
+    },
+    "outputSchema": null,
+    "icons": null,
+    "annotations": null,
+    "meta": null,
+    "execution": null
+  },
+  {
+    "name": "solidworks_boundary_cut",
+    "title": null,
+    "description": "Create a boundary cut feature from multiple profile sketches with optional guide curves to remove material.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "profiles": {
+          "type": "array",
+          "description": "Ordered array of direction 1 profile sketch names",
+          "items": {
+            "type": "string"
+          },
+          "minItems": 2
+        },
+        "guideCurves": {
+          "type": "array",
+          "description": "Optional array of direction 2 guide curve sketch names",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "profiles"
+      ]
+    },
+    "outputSchema": null,
+    "icons": null,
+    "annotations": null,
+    "meta": null,
+    "execution": null
+  },
+  {
+    "name": "solidworks_fillet",
+    "title": null,
+    "description": "Apply a constant-radius fillet to edges of the active part. PREFERRED: pass 'feature' to fillet every edge of that feature (e.g. 'R3 TYP on the boss' = feature: 'Boss-Extrude2') — no coordinates needed. Or/and select specific edges by 3D coordinates (mm) near each edge.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "radius": {
+          "type": "number",
+          "description": "Fillet radius (mm)"
+        },
+        "edges": {
+          "type": "array",
+          "description": "Array of points on edges to fillet. Each point is {x, y, z} in mm.",
+          "items": {
+            "type": "object",
+            "properties": {
+              "x": {
+                "type": "number",
+                "description": "X coordinate (mm)"
+              },
+              "y": {
+                "type": "number",
+                "description": "Y coordinate (mm)"
+              },
+              "z": {
+                "type": "number",
+                "description": "Z coordinate (mm)"
+              }
+            },
+            "required": [
+              "x",
+              "y",
+              "z"
+            ]
+          }
+        },
+        "feature": {
+          "type": "string",
+          "description": "Fillet ALL edges belonging to this feature (id or name, e.g. 'feat:Boss-Extrude2') — preferred over coordinates"
+        }
+      },
+      "required": [
+        "radius"
+      ]
+    },
+    "outputSchema": null,
+    "icons": null,
+    "annotations": null,
+    "meta": null,
+    "execution": null
+  },
+  {
+    "name": "solidworks_chamfer",
+    "title": null,
+    "description": "Apply a chamfer to edges of the active part. PREFERRED: pass 'feature' to chamfer every edge of that feature — no coordinates needed, works regardless of camera view. Or/and select specific edges by 3D coordinates (mm) near each edge.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "distance": {
+          "type": "number",
+          "description": "Chamfer distance (mm)"
+        },
+        "edges": {
+          "type": "array",
+          "description": "Array of points on edges to chamfer. Each point is {x, y, z} in mm.",
+          "items": {
+            "type": "object",
+            "properties": {
+              "x": {
+                "type": "number",
+                "description": "X coordinate (mm)"
+              },
+              "y": {
+                "type": "number",
+                "description": "Y coordinate (mm)"
+              },
+              "z": {
+                "type": "number",
+                "description": "Z coordinate (mm)"
+              }
+            },
+            "required": [
+              "x",
+              "y",
+              "z"
+            ]
+          }
+        },
+        "feature": {
+          "type": "string",
+          "description": "Chamfer ALL edges belonging to this feature (id or name, e.g. 'feat:Boss-Extrude2') — preferred over coordinates"
+        },
+        "angle": {
+          "type": "number",
+          "description": "Chamfer angle in degrees (default: 45). Only used with DISTANCE_ANGLE type.",
+          "default": 45
+        },
+        "distance2": {
+          "type": "number",
+          "description": "Second distance (mm) for TWO_DISTANCES chamfer type."
+        },
+        "type": {
+          "type": "string",
+          "enum": [
+            "EQUAL_DISTANCE",
+            "DISTANCE_ANGLE",
+            "TWO_DISTANCES"
+          ],
+          "description": "Chamfer type. Default: EQUAL_DISTANCE",
+          "default": "EQUAL_DISTANCE"
+        }
+      },
+      "required": [
+        "distance"
+      ]
+    },
+    "outputSchema": null,
+    "icons": null,
+    "annotations": null,
+    "meta": null,
+    "execution": null
+  },
+  {
+    "name": "solidworks_shell",
+    "title": null,
+    "description": "Create a shell feature by hollowing out the active part. Select faces to remove (open) by providing 3D coordinates (mm).",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "thickness": {
+          "type": "number",
+          "description": "Shell wall thickness (mm)"
+        },
+        "facesToRemove": {
+          "type": "array",
+          "description": "Array of points on faces to remove (open). Each point is {x, y, z} in mm.",
+          "items": {
+            "type": "object",
+            "properties": {
+              "x": {
+                "type": "number",
+                "description": "X coordinate (mm)"
+              },
+              "y": {
+                "type": "number",
+                "description": "Y coordinate (mm)"
+              },
+              "z": {
+                "type": "number",
+                "description": "Z coordinate (mm)"
+              }
+            },
+            "required": [
+              "x",
+              "y",
+              "z"
+            ]
+          }
+        },
+        "outward": {
+          "type": "boolean",
+          "description": "Shell outward instead of inward (default: false)",
+          "default": false
+        }
+      },
+      "required": [
+        "thickness",
+        "facesToRemove"
+      ]
+    },
+    "outputSchema": null,
+    "icons": null,
+    "annotations": null,
+    "meta": null,
+    "execution": null
+  },
+  {
+    "name": "solidworks_draft",
+    "title": null,
+    "description": "Apply a draft angle to one or more faces. Requires a neutral plane and faces to draft.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "angle": {
+          "type": "number",
+          "description": "Draft angle in degrees"
+        },
+        "neutralPlane": {
+          "type": "string",
+          "description": "Neutral plane name ('Front', 'Top', 'Right', or custom plane name)"
+        },
+        "facesToDraft": {
+          "type": "array",
+          "description": "Array of points on faces to apply draft to. Each point is {x, y, z} in mm.",
+          "items": {
+            "type": "object",
+            "properties": {
+              "x": {
+                "type": "number",
+                "description": "X coordinate (mm)"
+              },
+              "y": {
+                "type": "number",
+                "description": "Y coordinate (mm)"
+              },
+              "z": {
+                "type": "number",
+                "description": "Z coordinate (mm)"
+              }
+            },
+            "required": [
+              "x",
+              "y",
+              "z"
+            ]
+          }
+        },
+        "outward": {
+          "type": "boolean",
+          "description": "Draft outward (default: false)",
+          "default": false
+        }
+      },
+      "required": [
+        "angle",
+        "neutralPlane",
+        "facesToDraft"
+      ]
+    },
+    "outputSchema": null,
+    "icons": null,
+    "annotations": null,
+    "meta": null,
+    "execution": null
+  },
+  {
+    "name": "solidworks_rib",
+    "title": null,
+    "description": "Create a rib feature from the current sketch. The sketch should be an open profile that intersects the existing body. The rib adds material between the sketch and the body.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "thickness": {
+          "type": "number",
+          "description": "Rib thickness (mm)"
+        },
+        "reverse": {
+          "type": "boolean",
+          "description": "Reverse thickness direction (default: false)",
+          "default": false
+        },
+        "flipSide": {
+          "type": "boolean",
+          "description": "Flip the extrusion side (default: false)",
+          "default": false
+        }
+      },
+      "required": [
+        "thickness"
+      ]
+    },
+    "outputSchema": null,
+    "icons": null,
+    "annotations": null,
+    "meta": null,
+    "execution": null
+  },
+  {
+    "name": "solidworks_wrap",
+    "title": null,
+    "description": "Wrap a sketch profile onto a face. The sketch should be on a plane tangent to or near the target face. Supports emboss (add material), deboss (remove material), and scribe (split line only).",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": [
+            "EMBOSS",
+            "DEBOSS",
+            "SCRIBE"
+          ],
+          "description": "Wrap type: EMBOSS adds material, DEBOSS removes material, SCRIBE creates a split line"
+        },
+        "face": {
+          "type": "object",
+          "description": "Point on the target face to wrap onto ({x, y, z} in mm)",
+          "properties": {
+            "x": {
+              "type": "number"
+            },
+            "y": {
+              "type": "number"
+            },
+            "z": {
+              "type": "number"
+            }
+          },
+          "required": [
+            "x",
+            "y",
+            "z"
+          ]
+        },
+        "depth": {
+          "type": "number",
+          "description": "Depth (mm) for emboss/deboss. Not used for scribe."
+        }
+      },
+      "required": [
+        "type",
+        "face"
+      ]
+    },
+    "outputSchema": null,
+    "icons": null,
+    "annotations": null,
+    "meta": null,
+    "execution": null
+  },
+  {
+    "name": "solidworks_intersect",
+    "title": null,
+    "description": "Keep only the shared (intersecting) volume of overlapping SOLID bodies in a multi-body part — a COMMON boolean. Create separate bodies first with create_extrusion merge=false. If 'bodies' is empty, ALL solid bodies are intersected. (SolidWorks exposes no COM API for the full Intersect feature; surfaces/planes are not supported.)",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "bodies": {
+          "type": "array",
+          "description": "Body names to intersect (from list_features/get_body_info; a body is named after its last feature, e.g. 'Boss-Extrude2'). Empty = all solid bodies.",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "outputSchema": null,
+    "icons": null,
+    "annotations": null,
+    "meta": null,
+    "execution": null
+  },
+  {
+    "name": "solidworks_linear_pattern",
+    "title": null,
+    "description": "Create a linear pattern of features in one or two directions. Specify features to pattern, a direction edge, spacing, and count.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "features": {
+          "type": "array",
+          "description": "Array of feature names to pattern (e.g. ['Cut-Extrude1', 'Fillet1']). Use solidworks_list_features to discover feature names.",
+          "items": {
+            "type": "string"
+          }
+        },
+        "direction1": {
+          "type": "object",
+          "description": "Pattern direction 1: EITHER {\"axis\": \"X\"|\"Y\"|\"Z\"} (PREFERRED — picks any body edge parallel to that model axis, no coordinates needed; use reverseDir1 if the pattern runs the wrong way) OR a point on an edge ({x, y, z} in mm)",
+          "properties": {
+            "axis": {
+              "type": "string",
+              "enum": [
+                "X",
+                "Y",
+                "Z"
+              ],
+              "description": "Model axis for the pattern direction (preferred over coordinates)"
+            },
+            "x": {
+              "type": "number"
+            },
+            "y": {
+              "type": "number"
+            },
+            "z": {
+              "type": "number"
+            }
+          }
+        },
+        "spacing1": {
+          "type": "number",
+          "description": "Spacing between instances in direction 1 (mm)"
+        },
+        "count1": {
+          "type": "integer",
+          "description": "Total number of instances in direction 1 (including original)"
+        },
+        "reverseDir1": {
+          "type": "boolean",
+          "description": "Reverse direction 1 (default: false)",
+          "default": false
+        },
+        "direction2": {
+          "type": "object",
+          "description": "Optional pattern direction 2: {\"axis\": \"X\"|\"Y\"|\"Z\"} (preferred) or a point on an edge ({x, y, z} in mm)",
+          "properties": {
+            "axis": {
+              "type": "string",
+              "enum": [
+                "X",
+                "Y",
+                "Z"
+              ],
+              "description": "Model axis for the pattern direction (preferred over coordinates)"
+            },
+            "x": {
+              "type": "number"
+            },
+            "y": {
+              "type": "number"
+            },
+            "z": {
+              "type": "number"
+            }
+          }
+        },
+        "spacing2": {
+          "type": "number",
+          "description": "Spacing in direction 2 (mm)"
+        },
+        "count2": {
+          "type": "integer",
+          "description": "Total instances in direction 2"
+        },
+        "reverseDir2": {
+          "type": "boolean",
+          "description": "Reverse direction 2 (default: false)",
+          "default": false
+        }
+      },
+      "required": [
+        "features",
+        "direction1",
+        "spacing1",
+        "count1"
+      ]
+    },
+    "outputSchema": null,
+    "icons": null,
+    "annotations": null,
+    "meta": null,
+    "execution": null
+  },
+  {
+    "name": "solidworks_circular_pattern",
+    "title": null,
+    "description": "Create a circular pattern of features around an axis. Specify features to pattern, a rotation axis, count, and angular spacing.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "features": {
+          "type": "array",
+          "description": "Array of feature names to pattern. Use solidworks_list_features to discover names.",
+          "items": {
+            "type": "string"
+          }
+        },
+        "axis": {
+          "type": "string",
+          "description": "Name of the axis or edge for rotation. Can be a reference axis name, or a standard axis like 'Top Plane' edge."
+        },
+        "axisEdge": {
+          "type": "object",
+          "description": "Alternative: point on an edge to use as axis ({x, y, z} in mm). Use this instead of 'axis' when selecting by coordinate.",
+          "properties": {
+            "x": {
+              "type": "number"
+            },
+            "y": {
+              "type": "number"
+            },
+            "z": {
+              "type": "number"
+            }
+          },
+          "required": [
+            "x",
+            "y",
+            "z"
+          ]
+        },
+        "count": {
+          "type": "integer",
+          "description": "Total number of instances (including original)"
+        },
+        "angle": {
+          "type": "number",
+          "description": "Total angle for pattern in degrees (default: 360)",
+          "default": 360
+        },
+        "equalSpacing": {
+          "type": "boolean",
+          "description": "Space instances equally within the angle (default: true)",
+          "default": true
+        }
+      },
+      "required": [
+        "features",
+        "count"
+      ]
+    },
+    "outputSchema": null,
+    "icons": null,
+    "annotations": null,
+    "meta": null,
+    "execution": null
+  },
+  {
+    "name": "solidworks_mirror",
+    "title": null,
+    "description": "Mirror one or more features about a reference plane or planar face. Creates a symmetric copy of the selected features.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "features": {
+          "type": "array",
+          "description": "Array of feature names to mirror. Use solidworks_list_features to discover names.",
+          "items": {
+            "type": "string"
+          }
+        },
+        "mirrorPlane": {
+          "type": "string",
+          "description": "Mirror plane name ('Front', 'Top', 'Right', or custom plane name)"
+        },
+        "mirrorFace": {
+          "type": "object",
+          "description": "Alternative: point on a planar face to use as mirror plane ({x, y, z} in mm). Use this instead of 'mirrorPlane'.",
+          "properties": {
+            "x": {
+              "type": "number"
+            },
+            "y": {
+              "type": "number"
+            },
+            "z": {
+              "type": "number"
+            }
+          },
+          "required": [
+            "x",
+            "y",
+            "z"
+          ]
+        }
+      },
+      "required": [
+        "features"
+      ]
+    },
+    "outputSchema": null,
+    "icons": null,
+    "annotations": null,
+    "meta": null,
+    "execution": null
+  },
+  {
+    "name": "solidworks_hole_wizard",
+    "title": null,
+    "description": "Create a Hole Wizard hole on a selected face. Supports counterbore, countersink, standard hole, straight tap, and tapered tap types. NOTE: This feature uses the HoleWizard COM API which may trigger a blocking dialog in some SolidWorks versions. If it fails, use a sketch circle + cut-extrude as a workaround.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": [
+            "COUNTERBORE",
+            "COUNTERSINK",
+            "HOLE",
+            "STRAIGHT_TAP",
+            "TAPERED_TAP",
+            "LEGACY"
+          ],
+          "description": "Hole type"
+        },
+        "standard": {
+          "type": "integer",
+          "description": "Hole standard: 0=Ansi Inch, 1=Ansi Metric, 2=AS, 3=BSP, 4=DIN, 5=DME, 6=GB, 7=Hasco, 8=IS, 9=ISO, 10=JIS, 11=KS, 12=PCS, 13=Progressive, 14=Superior"
+        },
+        "fastenerType": {
+          "type": "string",
+          "description": "Fastener type string (e.g., 'Hex Bolt', 'Socket Head Cap Screw'). Depends on the standard selected."
+        },
+        "size": {
+          "type": "string",
+          "description": "Hole size designation (e.g., 'M10', '#10', '1/4')"
+        },
+        "endCondition": {
+          "type": "string",
+          "enum": [
+            "BLIND",
+            "THROUGH_ALL",
+            "UP_TO_NEXT"
+          ],
+          "description": "Hole end condition (default: BLIND)",
+          "default": "BLIND"
+        },
+        "depth": {
+          "type": "number",
+          "description": "Hole depth in mm (for BLIND end condition)"
+        },
+        "face": {
+          "type": "object",
+          "description": "Point on the face to place hole ({x, y, z} in mm)",
+          "properties": {
+            "x": {
+              "type": "number"
+            },
+            "y": {
+              "type": "number"
+            },
+            "z": {
+              "type": "number"
+            }
+          },
+          "required": [
+            "x",
+            "y",
+            "z"
+          ]
+        },
+        "positions": {
+          "type": "array",
+          "description": "Array of hole center positions on the face. Each is {x, y} in mm (2D coordinates on the face plane).",
+          "items": {
+            "type": "object",
+            "properties": {
+              "x": {
+                "type": "number"
+              },
+              "y": {
+                "type": "number"
+              }
+            },
+            "required": [
+              "x",
+              "y"
+            ]
+          }
+        }
+      },
+      "required": [
+        "type",
+        "standard",
+        "face"
+      ]
+    },
+    "outputSchema": null,
+    "icons": null,
+    "annotations": null,
+    "meta": null,
+    "execution": null
+  },
+  {
+    "name": "solidworks_thread",
+    "title": null,
+    "description": "Apply a cosmetic thread to a cylindrical edge or face. Cosmetic threads display thread callouts in drawings but do not modify the solid geometry.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "edge": {
+          "type": "object",
+          "description": "Point on the circular edge to apply thread ({x, y, z} in mm)",
+          "properties": {
+            "x": {
+              "type": "number"
+            },
+            "y": {
+              "type": "number"
+            },
+            "z": {
+              "type": "number"
+            }
+          },
+          "required": [
+            "x",
+            "y",
+            "z"
+          ]
+        },
+        "depth": {
+          "type": "number",
+          "description": "Thread depth/length (mm)"
+        },
+        "diameter": {
+          "type": "number",
+          "description": "Minor diameter (mm) for the thread display"
+        }
+      },
+      "required": [
+        "edge",
+        "depth",
+        "diameter"
+      ]
+    },
+    "outputSchema": null,
+    "icons": null,
+    "annotations": null,
+    "meta": null,
+    "execution": null
+  },
+  {
+    "name": "solidworks_ref_plane",
+    "title": null,
+    "description": "Create a reference plane. Supports offset from a reference plane, at an angle to a plane through an edge, or through a point parallel to a plane.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": [
+            "OFFSET",
+            "ANGLE",
+            "THROUGH_POINT"
+          ],
+          "description": "Plane creation type (default: OFFSET)",
+          "default": "OFFSET"
+        },
+        "referencePlane": {
+          "type": "string",
+          "description": "Base reference plane name ('Front', 'Top', 'Right', or custom). Required for OFFSET and ANGLE types."
+        },
+        "offset": {
+          "type": "number",
+          "description": "Offset distance (mm) from reference plane. Used for OFFSET type."
+        },
+        "reverse": {
+          "type": "boolean",
+          "description": "Reverse offset/angle direction (default: false)",
+          "default": false
+        },
+        "angle": {
+          "type": "number",
+          "description": "Angle in degrees from reference plane. Used for ANGLE type."
+        },
+        "edge": {
+          "type": "object",
+          "description": "Point on an edge for ANGLE type ({x, y, z} in mm). The plane rotates around this edge.",
+          "properties": {
+            "x": {
+              "type": "number"
+            },
+            "y": {
+              "type": "number"
+            },
+            "z": {
+              "type": "number"
+            }
+          },
+          "required": [
+            "x",
+            "y",
+            "z"
+          ]
+        },
+        "point": {
+          "type": "object",
+          "description": "Point for THROUGH_POINT type ({x, y, z} in mm). Creates a plane through this point parallel to referencePlane.",
+          "properties": {
+            "x": {
+              "type": "number"
+            },
+            "y": {
+              "type": "number"
+            },
+            "z": {
+              "type": "number"
+            }
+          },
+          "required": [
+            "x",
+            "y",
+            "z"
+          ]
+        }
+      }
+    },
+    "outputSchema": null,
+    "icons": null,
+    "annotations": null,
+    "meta": null,
+    "execution": null
+  },
+  {
+    "name": "solidworks_ref_axis",
+    "title": null,
+    "description": "Create a reference axis. Can be defined by two points, a cylindrical face, or an edge.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": [
+            "TWO_POINTS",
+            "CYLINDRICAL_FACE",
+            "EDGE"
+          ],
+          "description": "Axis creation type"
+        },
+        "point1": {
+          "type": "object",
+          "description": "First point ({x, y, z} in mm) for TWO_POINTS type",
+          "properties": {
+            "x": {
+              "type": "number"
+            },
+            "y": {
+              "type": "number"
+            },
+            "z": {
+              "type": "number"
+            }
+          },
+          "required": [
+            "x",
+            "y",
+            "z"
+          ]
+        },
+        "point2": {
+          "type": "object",
+          "description": "Second point ({x, y, z} in mm) for TWO_POINTS type",
+          "properties": {
+            "x": {
+              "type": "number"
+            },
+            "y": {
+              "type": "number"
+            },
+            "z": {
+              "type": "number"
+            }
+          },
+          "required": [
+            "x",
+            "y",
+            "z"
+          ]
+        },
+        "face": {
+          "type": "object",
+          "description": "Point on a cylindrical face ({x, y, z} in mm) for CYLINDRICAL_FACE type",
+          "properties": {
+            "x": {
+              "type": "number"
+            },
+            "y": {
+              "type": "number"
+            },
+            "z": {
+              "type": "number"
+            }
+          },
+          "required": [
+            "x",
+            "y",
+            "z"
+          ]
+        },
+        "edge": {
+          "type": "object",
+          "description": "Point on an edge ({x, y, z} in mm) for EDGE type",
+          "properties": {
+            "x": {
+              "type": "number"
+            },
+            "y": {
+              "type": "number"
+            },
+            "z": {
+              "type": "number"
+            }
+          },
+          "required": [
+            "x",
+            "y",
+            "z"
+          ]
+        }
+      },
+      "required": [
+        "type"
+      ]
+    },
+    "outputSchema": null,
+    "icons": null,
+    "annotations": null,
+    "meta": null,
+    "execution": null
+  },
+  {
+    "name": "solidworks_ref_point",
+    "title": null,
+    "description": "Create a reference point at specific coordinates, at the center of an arc/edge, or on a face.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": [
+            "COORDINATES",
+            "ARC_CENTER",
+            "FACE_CENTER",
+            "ON_EDGE"
+          ],
+          "description": "Point creation type (default: COORDINATES)",
+          "default": "COORDINATES"
+        },
+        "x": {
+          "type": "number",
+          "description": "X coordinate (mm) for COORDINATES type"
+        },
+        "y": {
+          "type": "number",
+          "description": "Y coordinate (mm) for COORDINATES type"
+        },
+        "z": {
+          "type": "number",
+          "description": "Z coordinate (mm) for COORDINATES type"
+        },
+        "edge": {
+          "type": "object",
+          "description": "Point on an edge/arc ({x, y, z} in mm) for ARC_CENTER or ON_EDGE type",
+          "properties": {
+            "x": {
+              "type": "number"
+            },
+            "y": {
+              "type": "number"
+            },
+            "z": {
+              "type": "number"
+            }
+          },
+          "required": [
+            "x",
+            "y",
+            "z"
+          ]
+        },
+        "face": {
+          "type": "object",
+          "description": "Point on a face ({x, y, z} in mm) for FACE_CENTER type",
+          "properties": {
+            "x": {
+              "type": "number"
+            },
+            "y": {
+              "type": "number"
+            },
+            "z": {
+              "type": "number"
+            }
+          },
+          "required": [
+            "x",
+            "y",
+            "z"
+          ]
+        }
+      }
+    },
+    "outputSchema": null,
+    "icons": null,
+    "annotations": null,
+    "meta": null,
+    "execution": null
+  },
+  {
+    "name": "solidworks_coordinate_system",
+    "title": null,
+    "description": "Create a coordinate system at a specified origin with optional axis directions defined by edges or vertices.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "origin": {
+          "type": "object",
+          "description": "Origin point ({x, y, z} in mm)",
+          "properties": {
+            "x": {
+              "type": "number"
+            },
+            "y": {
+              "type": "number"
+            },
+            "z": {
+              "type": "number"
+            }
+          },
+          "required": [
+            "x",
+            "y",
+            "z"
+          ]
+        },
+        "xAxisEdge": {
+          "type": "object",
+          "description": "Optional: point on edge defining X axis direction ({x, y, z} in mm)",
+          "properties": {
+            "x": {
+              "type": "number"
+            },
+            "y": {
+              "type": "number"
+            },
+            "z": {
+              "type": "number"
+            }
+          },
+          "required": [
+            "x",
+            "y",
+            "z"
+          ]
+        },
+        "yAxisEdge": {
+          "type": "object",
+          "description": "Optional: point on edge defining Y axis direction ({x, y, z} in mm)",
+          "properties": {
+            "x": {
+              "type": "number"
+            },
+            "y": {
+              "type": "number"
+            },
+            "z": {
+              "type": "number"
+            }
+          },
+          "required": [
+            "x",
+            "y",
+            "z"
+          ]
+        }
+      },
+      "required": [
+        "origin"
+      ]
+    },
+    "outputSchema": null,
+    "icons": null,
+    "annotations": null,
+    "meta": null,
+    "execution": null
+  },
+  {
+    "name": "solidworks_get_body_info",
+    "title": null,
+    "description": "Get a high-level overview of the active part body: bounding box dimensions, face count, edge count, and vertex count. Use this as a quick check of model state before querying individual faces or edges.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {}
+    },
+    "outputSchema": null,
+    "icons": null,
+    "annotations": null,
+    "meta": null,
+    "execution": null
+  },
+  {
+    "name": "solidworks_get_faces",
+    "title": null,
+    "description": "Enumerate all faces on the active part body. Returns each face's surface type, area, normal/axis info, a sample point (usable for selection in fillet/chamfer/shell/draft), edge count, and the feature that created it (e.g. 'feature': 'Boss-Extrude1'). Use the optional surfaceType filter to narrow results.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "surfaceType": {
+          "type": "string",
+          "enum": [
+            "PLANE",
+            "CYLINDER",
+            "CONE",
+            "SPHERE",
+            "TORUS",
+            "BSPLINE"
+          ],
+          "description": "Optional: filter faces by surface type. If omitted, returns all faces."
+        }
+      }
+    },
+    "outputSchema": null,
+    "icons": null,
+    "annotations": null,
+    "meta": null,
+    "execution": null
+  },
+  {
+    "name": "solidworks_get_edges",
+    "title": null,
+    "description": "Enumerate all edges on the active part body. Returns each edge's type (Line/Circle/Arc), start and end vertex coordinates, a midpoint (usable for selection in fillet/chamfer/pattern direction), length, whether the edge is smooth (tangent), and the feature(s) whose faces meet at the edge ('features' list — e.g. select all edges bordering 'Boss-Extrude1'). Smooth edges (e.g., fillet boundaries) cannot be filleted or chamfered — skip them when selecting edges for those operations. Use the optional edgeType filter to narrow results.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "edgeType": {
+          "type": "string",
+          "enum": [
+            "LINE",
+            "CIRCLE",
+            "ARC"
+          ],
+          "description": "Optional: filter edges by curve type. If omitted, returns all edges."
+        },
+        "feature": {
+          "type": "string",
+          "description": "Optional: only edges bordering this feature (id or name, e.g. 'feat:Boss-Extrude2'). Combines with edgeType."
+        }
+      }
+    },
+    "outputSchema": null,
+    "icons": null,
+    "annotations": null,
+    "meta": null,
+    "execution": null
+  },
+  {
+    "name": "solidworks_get_face_edges",
+    "title": null,
+    "description": "Get detailed information about a specific face and its bounding edges. Select the face by providing a 3D point on or near it. Returns face properties and each edge's endpoints, midpoint, and smooth flag. Smooth edges (e.g., fillet boundaries) cannot be filleted or chamfered. Use this to drill down into a face found via get_faces.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "x": {
+          "type": "number",
+          "description": "X coordinate on/near the face (mm)"
+        },
+        "y": {
+          "type": "number",
+          "description": "Y coordinate on/near the face (mm)"
+        },
+        "z": {
+          "type": "number",
+          "description": "Z coordinate on/near the face (mm)"
+        }
+      },
+      "required": [
+        "x",
+        "y",
+        "z"
+      ]
+    },
+    "outputSchema": null,
+    "icons": null,
+    "annotations": null,
+    "meta": null,
+    "execution": null
+  },
+  {
+    "name": "solidworks_get_vertices",
+    "title": null,
+    "description": "List all unique vertex (corner) positions on the active part body. Returns 3D coordinates in mm, sorted by (x, y, z). Useful for understanding model geometry and as reference points.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {}
+    },
+    "outputSchema": null,
+    "icons": null,
+    "annotations": null,
+    "meta": null,
+    "execution": null
+  },
+  {
+    "name": "solidworks_find_face",
+    "title": null,
+    "description": "Select a face by DESCRIPTION instead of coordinates: filter by orientation (+X/-X/+Y/-Y/+Z/-Z, ANGLED = planar but not axis-aligned, ANY), by the feature that created it, by surface type, and/or by area rank. Returns matching face(s) with a samplePoint ready to use in create_sketch (faceX/faceY/faceZ) or selection-based tools. PREFER THIS over guessing coordinates — e.g. a drawing note like 'sketch on the angled face' is exactly find_face(orientation='ANGLED').",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "orientation": {
+          "type": "string",
+          "enum": [
+            "+X",
+            "-X",
+            "+Y",
+            "-Y",
+            "+Z",
+            "-Z",
+            "ANGLED",
+            "ANY"
+          ],
+          "description": "Planar face normal direction filter"
+        },
+        "feature": {
+          "type": "string",
+          "description": "Only faces created by this feature (id or name)"
+        },
+        "surfaceType": {
+          "type": "string",
+          "enum": [
+            "PLANE",
+            "CYLINDER",
+            "CONE",
+            "SPHERE",
+            "TORUS"
+          ],
+          "description": "Surface type filter"
+        },
+        "areaRank": {
+          "type": "string",
+          "enum": [
+            "LARGEST",
+            "SMALLEST"
+          ],
+          "description": "Keep only the largest/smallest match"
+        }
+      }
+    },
+    "outputSchema": null,
+    "icons": null,
+    "annotations": null,
+    "meta": null,
+    "execution": null
+  },
+  {
+    "name": "solidworks_look_at_model",
+    "title": null,
+    "description": "SEE the model you are building: returns a screenshot of the current part in a standard view, with face labels (F0, F1...) overlaid at each face — label indices match get_faces/find_face. Use it to verify features landed where intended, to pick the right face visually, or whenever you are unsure what the model actually looks like. view='sketch' captures the ACTIVE sketch normal-to (flat 2D) — review your profile against the drawing BEFORE extruding it.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "view": {
+          "type": "string",
+          "enum": [
+            "isometric",
+            "front",
+            "back",
+            "left",
+            "right",
+            "top",
+            "bottom",
+            "sketch"
+          ],
+          "description": "Standard view (default isometric); 'sketch' = normal-to of the active sketch"
+        },
+        "labels": {
+          "type": "boolean",
+          "description": "Overlay face labels (default true)"
+        }
+      }
+    },
+    "outputSchema": null,
+    "icons": null,
+    "annotations": null,
+    "meta": null,
+    "execution": null
+  },
+  {
+    "name": "solidworks_get_state",
+    "title": null,
+    "description": "Get a summary of the current session: tracked features, sketches, entities, and reference geometry with their IDs, plus live model context (bounding box, sketch constraint status, active configuration). Use detail='full' to also include the feature dependency tree (parents/children per feature).",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "detail": {
+          "type": "string",
+          "enum": [
+            "summary",
+            "full"
+          ],
+          "description": "'summary' (default) = tracked objects + bounding box + sketch status. 'full' adds feature parent/child dependencies."
+        }
+      }
+    },
+    "outputSchema": null,
+    "icons": null,
+    "annotations": null,
+    "meta": null,
+    "execution": null
+  },
+  {
+    "name": "solidworks_get_entity",
+    "title": null,
+    "description": "Get detailed information about a tracked object by its ID. Accepts feature IDs (feat:...), sketch IDs (sketch:...), entity IDs (entity:...), or reference IDs (ref:...).",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "The stable ID of the object to query (e.g., 'feat:Boss-Extrude1', 'sketch:Sketch1', 'entity:Sketch1/line_0')"
+        }
+      },
+      "required": [
+        "id"
+      ]
+    },
+    "outputSchema": null,
+    "icons": null,
+    "annotations": null,
+    "meta": null,
+    "execution": null
+  },
+  {
+    "name": "solidworks_get_sketch_entities",
+    "title": null,
+    "description": "List all tracked sketch entities in a specific sketch. Returns entity IDs, types, and coordinates.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "sketchId": {
+          "type": "string",
+          "description": "Sketch ID (e.g., 'sketch:Sketch1') or just the sketch name (e.g., 'Sketch1')"
+        }
+      },
+      "required": [
+        "sketchId"
+      ]
+    },
+    "outputSchema": null,
+    "icons": null,
+    "annotations": null,
+    "meta": null,
+    "execution": null
+  },
+  {
+    "name": "solidworks_save_document",
+    "title": null,
+    "description": "Save the active document to disk. Required before a part can be inserted into an assembly. A bare filename (e.g. 'bracket') is saved into the project workspace directory; an absolute path is used as-is. The correct extension (.SLDPRT/.SLDASM) is added automatically based on document type. Giving a neutral-format extension instead (.STEP, .STP, .IGS, .X_T, .SAT, .STL, .3MF) EXPORTS to that format — the SolidWorks document stays open and unchanged, so you can keep modelling after an export.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "path": {
+          "type": "string",
+          "description": "Filename or absolute path to save to (extension optional for native saves; give .STEP/.STP/.IGS/.X_T/.SAT/.STL to export)"
+        }
+      },
+      "required": [
+        "path"
+      ]
+    },
+    "outputSchema": null,
+    "icons": null,
+    "annotations": null,
+    "meta": null,
+    "execution": null
+  },
+  {
+    "name": "solidworks_open_document",
+    "title": null,
+    "description": "Open a part, assembly, or drawing document from disk (silently, no dialogs). The opened document becomes active. Neutral CAD files (.STEP/.STP/.IGS/.X_T/.SAT/.STL) are routed to the importer automatically — see solidworks_import_file for the import options.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "path": {
+          "type": "string",
+          "description": "Absolute path to the .SLDPRT/.SLDASM/.SLDDRW file, or a neutral CAD file to import"
+        }
+      },
+      "required": [
+        "path"
+      ]
+    },
+    "outputSchema": null,
+    "icons": null,
+    "annotations": null,
+    "meta": null,
+    "execution": null
+  },
+  {
+    "name": "solidworks_import_file",
+    "title": null,
+    "description": "Import a neutral CAD file (STEP/IGES/Parasolid/ACIS/STL) as a new part. By default the file lands as a single dumb solid body ('Imported1') with no feature history — geometry queries, fillets, cuts and direct edits all work on it, but there are no parametric dimensions to drive. Set recognizeFeatures=true to run FeatureWorks afterwards and rebuild a real feature tree. Import takes a few seconds for small parts and ~10s for large ones.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "path": {
+          "type": "string",
+          "description": "Absolute path to the .STEP/.STP/.IGS/.IGES/.X_T/.X_B/.SAT/.STL file"
+        },
+        "recognizeFeatures": {
+          "type": "boolean",
+          "description": "Run FeatureWorks feature recognition after import (default false). Adds ~1-2 minutes on a complex part."
+        },
+        "linked": {
+          "type": "boolean",
+          "description": "Import via 3D Interconnect as a LINKED, associative body that updates when the source file changes (default false). Linked bodies cannot be feature-recognized or parametrically edited."
+        }
+      },
+      "required": [
+        "path"
+      ]
+    },
+    "outputSchema": null,
+    "icons": null,
+    "annotations": null,
+    "meta": null,
+    "execution": null
+  },
+  {
+    "name": "solidworks_recognize_features",
+    "title": null,
+    "description": "Run FeatureWorks feature recognition on the active part, converting an imported dumb solid into a parametric feature tree (extrudes, hole-wizard holes, fillets, chamfers, revolves). The recovered features carry drivable dimensions usable with set_parameter (e.g. 'D1@Fillet1'). NOTE: recognized SKETCHES come back constrained but NOT dimensioned, so sketch profiles cannot be driven numerically — change the shape of a recognized cut by editing sketch geometry or by direct face editing instead. Requires SOLIDWORKS Professional/Premium.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "featureTypes": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "EXTRUDE",
+              "VOLUME",
+              "REVOLVE",
+              "HOLES",
+              "CHAMFER_FILLET",
+              "RIBS",
+              "BASE_FLANGE",
+              "SKETCHED_BEND",
+              "EDGE_FLANGE",
+              "HEM_FLANGE"
+            ]
+          },
+          "description": "Feature types to recognize (default: EXTRUDE, VOLUME, REVOLVE, HOLES, CHAMFER_FILLET, RIBS). Keep VOLUME in the list — it is what finds the base feature; dropping it can make recognition return nothing on simple prismatic parts."
+        },
+        "addConstraints": {
+          "type": "boolean",
+          "description": "Add sketch constraints to recognized profiles (default true)"
+        }
+      }
+    },
+    "outputSchema": null,
+    "icons": null,
+    "annotations": null,
+    "meta": null,
+    "execution": null
+  },
+  {
+    "name": "solidworks_activate_document",
+    "title": null,
+    "description": "Switch the active document to another open document by name/title (e.g. 'Part1', 'bracket', 'Assem1'). Subsequent tool calls operate on the activated document.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Title of the open document to activate (extension optional)"
+        }
+      },
+      "required": [
+        "name"
+      ]
+    },
+    "outputSchema": null,
+    "icons": null,
+    "annotations": null,
+    "meta": null,
+    "execution": null
+  },
+  {
+    "name": "solidworks_close_document",
+    "title": null,
+    "description": "Close an open document WITHOUT saving (unsaved changes are discarded). If no name is given, closes the active document.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Title of the document to close (default: active document)"
+        }
+      }
+    },
+    "outputSchema": null,
+    "icons": null,
+    "annotations": null,
+    "meta": null,
+    "execution": null
+  },
+  {
+    "name": "solidworks_capture_views",
+    "title": null,
+    "description": "Export standard-view screenshots (PNG) of the active document. Each view is oriented (ShowNamedView2), zoomed to fit, and saved. Returns the file paths.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "views": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "ISOMETRIC",
+              "TRIMETRIC",
+              "DIMETRIC",
+              "FRONT",
+              "BACK",
+              "LEFT",
+              "RIGHT",
+              "TOP",
+              "BOTTOM"
+            ]
+          },
+          "description": "Views to capture (default: ISOMETRIC, FRONT, TOP)"
+        },
+        "outputDir": {
+          "type": "string",
+          "description": "Directory for the PNGs (default: workspace/screenshots)"
+        },
+        "prefix": {
+          "type": "string",
+          "description": "Filename prefix (default: the document title)"
+        }
+      }
+    },
+    "outputSchema": null,
+    "icons": null,
+    "annotations": null,
+    "meta": null,
+    "execution": null
+  },
+  {
+    "name": "solidworks_list_documents",
+    "title": null,
+    "description": "List all open documents with their titles, types, file paths, and which one is active.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {}
+    },
+    "outputSchema": null,
+    "icons": null,
+    "annotations": null,
+    "meta": null,
+    "execution": null
+  },
+  {
+    "name": "solidworks_new_assembly",
+    "title": null,
+    "description": "Create a new empty assembly document. Insert saved parts with insert_component afterwards.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {}
+    },
+    "outputSchema": null,
+    "icons": null,
+    "annotations": null,
+    "meta": null,
+    "execution": null
+  },
+  {
+    "name": "solidworks_insert_component",
+    "title": null,
+    "description": "Insert a saved part (or sub-assembly) into the active assembly at a drop point. NOTE: SolidWorks centers the component's bounding box at the drop point; the returned actualPosition is the component origin's resulting location. The first inserted component is automatically fixed in place. Use mates for precise positioning.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "path": {
+          "type": "string",
+          "description": "Path to the .SLDPRT/.SLDASM file (bare filenames resolve against the workspace directory)"
+        },
+        "x": {
+          "type": "number",
+          "description": "Drop point X (mm), default 0"
+        },
+        "y": {
+          "type": "number",
+          "description": "Drop point Y (mm), default 0"
+        },
+        "z": {
+          "type": "number",
+          "description": "Drop point Z (mm), default 0"
+        }
+      },
+      "required": [
+        "path"
+      ]
+    },
+    "outputSchema": null,
+    "icons": null,
+    "annotations": null,
+    "meta": null,
+    "execution": null
+  },
+  {
+    "name": "solidworks_add_mate",
+    "title": null,
+    "description": "Add a mate between two entities in the active assembly. Entities can be component planes (e.g. Front plane of comp:bracket-1) or coordinate-picked faces/edges in assembly space (use list_components for component positions; coordinates from get_faces of the part are in PART space and must be offset by the component position). Distance in mm, angle in degrees.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "mateType": {
+          "type": "string",
+          "enum": [
+            "COINCIDENT",
+            "CONCENTRIC",
+            "PERPENDICULAR",
+            "PARALLEL",
+            "TANGENT",
+            "DISTANCE",
+            "ANGLE",
+            "GEAR",
+            "LOCK"
+          ],
+          "description": "Type of mate"
+        },
+        "entity1": {
+          "type": "object",
+          "description": "Mate entity selector. Either a component plane (plane + component), or a coordinate pick on geometry (entityType + x/y/z in assembly-space mm).",
+          "properties": {
+            "plane": {
+              "type": "string",
+              "description": "Standard plane of a component: 'Front', 'Top', 'Right' (or a full plane name like 'Plane1'). Requires 'component'."
+            },
+            "component": {
+              "type": "string",
+              "description": "Component ID (comp:bracket-1) or name (bracket-1) the plane belongs to"
+            },
+            "entityType": {
+              "type": "string",
+              "enum": [
+                "FACE",
+                "EDGE",
+                "VERTEX"
+              ],
+              "description": "Geometry type for a coordinate pick"
+            },
+            "x": {
+              "type": "number",
+              "description": "X in assembly space (mm)"
+            },
+            "y": {
+              "type": "number",
+              "description": "Y in assembly space (mm)"
+            },
+            "z": {
+              "type": "number",
+              "description": "Z in assembly space (mm)"
+            }
+          }
+        },
+        "entity2": {
+          "type": "object",
+          "description": "Mate entity selector. Either a component plane (plane + component), or a coordinate pick on geometry (entityType + x/y/z in assembly-space mm).",
+          "properties": {
+            "plane": {
+              "type": "string",
+              "description": "Standard plane of a component: 'Front', 'Top', 'Right' (or a full plane name like 'Plane1'). Requires 'component'."
+            },
+            "component": {
+              "type": "string",
+              "description": "Component ID (comp:bracket-1) or name (bracket-1) the plane belongs to"
+            },
+            "entityType": {
+              "type": "string",
+              "enum": [
+                "FACE",
+                "EDGE",
+                "VERTEX"
+              ],
+              "description": "Geometry type for a coordinate pick"
+            },
+            "x": {
+              "type": "number",
+              "description": "X in assembly space (mm)"
+            },
+            "y": {
+              "type": "number",
+              "description": "Y in assembly space (mm)"
+            },
+            "z": {
+              "type": "number",
+              "description": "Z in assembly space (mm)"
+            }
+          }
+        },
+        "alignment": {
+          "type": "string",
+          "enum": [
+            "ALIGNED",
+            "ANTI_ALIGNED",
+            "CLOSEST"
+          ],
+          "description": "Mate alignment (default CLOSEST)"
+        },
+        "distance": {
+          "type": "number",
+          "description": "Distance value in mm (DISTANCE mates)"
+        },
+        "angle": {
+          "type": "number",
+          "description": "Angle value in degrees (ANGLE mates)"
+        },
+        "flip": {
+          "type": "boolean",
+          "description": "Flip dimension to the other side (default false)"
+        },
+        "gearRatioNumerator": {
+          "type": "number",
+          "description": "GEAR mates: ratio numerator (e.g. first gear's teeth or diameter)"
+        },
+        "gearRatioDenominator": {
+          "type": "number",
+          "description": "GEAR mates: ratio denominator (e.g. second gear's teeth or diameter)"
+        }
+      },
+      "required": [
+        "mateType",
+        "entity1",
+        "entity2"
+      ]
+    },
+    "outputSchema": null,
+    "icons": null,
+    "annotations": null,
+    "meta": null,
+    "execution": null
+  },
+  {
+    "name": "solidworks_list_components",
+    "title": null,
+    "description": "List all components in the active assembly: IDs, file paths, origin positions (mm), fixed and suppression status.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {}
+    },
+    "outputSchema": null,
+    "icons": null,
+    "annotations": null,
+    "meta": null,
+    "execution": null
+  },
+  {
+    "name": "solidworks_list_mates",
+    "title": null,
+    "description": "List all mates in the active assembly with their types, alignment, and mated components.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {}
+    },
+    "outputSchema": null,
+    "icons": null,
+    "annotations": null,
+    "meta": null,
+    "execution": null
+  },
+  {
+    "name": "solidworks_edit_mate",
+    "title": null,
+    "description": "Change the value of an existing DISTANCE or ANGLE mate. The assembly is rebuilt and the updated component positions are returned. Use this for 'modify the assembly' questions instead of deleting and re-creating mates.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "mate": {
+          "type": "string",
+          "description": "Mate ID (mate:Distance1) or name (Distance1)"
+        },
+        "distance": {
+          "type": "number",
+          "description": "New distance in mm (DISTANCE mates)"
+        },
+        "angle": {
+          "type": "number",
+          "description": "New angle in degrees (ANGLE mates)"
+        }
+      },
+      "required": [
+        "mate"
+      ]
+    },
+    "outputSchema": null,
+    "icons": null,
+    "annotations": null,
+    "meta": null,
+    "execution": null
+  },
+  {
+    "name": "solidworks_check_interference",
+    "title": null,
+    "description": "Detect interference (overlapping volume) between components in the active assembly. Returns each interference's volume in mm^3 and the components involved. Coincident (touching) faces are NOT counted as interference.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {}
+    },
+    "outputSchema": null,
+    "icons": null,
+    "annotations": null,
+    "meta": null,
+    "execution": null
+  },
+  {
+    "name": "solidworks_suppress_component",
+    "title": null,
+    "description": "Suppress or resolve (unsuppress) a component in the active assembly. Suppressed components are excluded from mass properties and interference checks.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "component": {
+          "type": "string",
+          "description": "Component ID (comp:name-1) or name (name-1)"
+        },
+        "suppress": {
+          "type": "boolean",
+          "description": "true = suppress, false = resolve"
+        }
+      },
+      "required": [
+        "component",
+        "suppress"
+      ]
+    },
+    "outputSchema": null,
+    "icons": null,
+    "annotations": null,
+    "meta": null,
+    "execution": null
+  },
+  {
+    "name": "solidworks_get_assembly_mass_properties",
+    "title": null,
+    "description": "Get mass properties (mass in kg and grams, volume, surface area, center of mass) for the entire active assembly. Pass coordinateSystem to report the center of mass relative to a coordinate system feature instead of the assembly origin.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "coordinateSystem": {
+          "type": "string",
+          "description": "Optional: name or ref ID of a coordinate system feature in the assembly"
+        }
+      }
+    },
+    "outputSchema": null,
+    "icons": null,
+    "annotations": null,
+    "meta": null,
+    "execution": null
+  },
+  {
+    "name": "solidworks_add_configuration",
+    "title": null,
+    "description": "Add a named configuration (design variant) to the active document. Use switch_configuration to activate it, and set_parameter with the configuration argument (or set_config_parameter) to give it different dimension values.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "New configuration name (e.g. 'Version B')"
+        },
+        "activate": {
+          "type": "boolean",
+          "description": "Activate it immediately (default true)"
+        }
+      },
+      "required": [
+        "name"
+      ]
+    },
+    "outputSchema": null,
+    "icons": null,
+    "annotations": null,
+    "meta": null,
+    "execution": null
+  },
+  {
+    "name": "solidworks_switch_configuration",
+    "title": null,
+    "description": "Activate a configuration by name. Subsequent mass properties reflect the active configuration.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Configuration name to activate"
+        }
+      },
+      "required": [
+        "name"
+      ]
+    },
+    "outputSchema": null,
+    "icons": null,
+    "annotations": null,
+    "meta": null,
+    "execution": null
+  },
+  {
+    "name": "solidworks_list_configurations",
+    "title": null,
+    "description": "List all configurations of the active document and which one is active.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {}
+    },
+    "outputSchema": null,
+    "icons": null,
+    "annotations": null,
+    "meta": null,
+    "execution": null
+  },
+  {
+    "name": "solidworks_set_config_parameter",
+    "title": null,
+    "description": "Set a dimension value in ONE SPECIFIC configuration only (other configurations keep their value). Parameter format like set_parameter: 'D1@Sketch1', 'D1@Boss-Extrude1'.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "parameter": {
+          "type": "string",
+          "description": "<DimName>@<FeatureOrSketchName>"
+        },
+        "value": {
+          "type": "number",
+          "description": "New value (mm for lengths, degrees for angles)"
+        },
+        "unit": {
+          "type": "string",
+          "enum": [
+            "mm",
+            "deg"
+          ],
+          "description": "Unit (default mm)"
+        },
+        "configuration": {
+          "type": "string",
+          "description": "Configuration to change"
+        }
+      },
+      "required": [
+        "parameter",
+        "value",
+        "configuration"
+      ]
+    },
+    "outputSchema": null,
+    "icons": null,
+    "annotations": null,
+    "meta": null,
+    "execution": null
+  },
+  {
+    "name": "solidworks_add_equation",
+    "title": null,
+    "description": "Add an equation linking dimensions, e.g. '\"D1@Boss-Extrude1\" = \"D1@Sketch1\" / 2' (dimension names in double quotes). The model re-solves automatically when driving dimensions change. Returns the equation index.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "equation": {
+          "type": "string",
+          "description": "Equation text; dimension names must be double-quoted, e.g. \"D2@Sketch1\" = \"D1@Sketch1\" * 0.5"
+        }
+      },
+      "required": [
+        "equation"
+      ]
+    },
+    "outputSchema": null,
+    "icons": null,
+    "annotations": null,
+    "meta": null,
+    "execution": null
+  },
+  {
+    "name": "solidworks_list_equations",
+    "title": null,
+    "description": "List all equations in the active document with their indices and current text.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {}
+    },
+    "outputSchema": null,
+    "icons": null,
+    "annotations": null,
+    "meta": null,
+    "execution": null
+  },
+  {
+    "name": "solidworks_delete_equation",
+    "title": null,
+    "description": "Delete an equation by its index (from list_equations).",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "index": {
+          "type": "integer",
+          "description": "Equation index to delete"
+        }
+      },
+      "required": [
+        "index"
+      ]
+    },
+    "outputSchema": null,
+    "icons": null,
+    "annotations": null,
+    "meta": null,
+    "execution": null
+  },
+  {
+    "name": "solidworks_get_feature_tree",
+    "title": null,
+    "description": "Read the design timeline as structured data: every feature in build order, with its type, tracked ID, suppression state, folder nesting, and absorbed sub-features (the sketch consumed by an extrude). This is the tool for understanding an existing model — your own from earlier in the session, one opened from disk, or one recovered by recognize_features. Prefer it over list_features, which returns unstructured text.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "includeSubFeatures": {
+          "type": "boolean",
+          "description": "Include absorbed children such as the sketch under an extrude (default true)"
+        },
+        "includeBoilerplate": {
+          "type": "boolean",
+          "description": "Include stock planes, origin and the standard folders (default false)"
+        },
+        "includeSuppressed": {
+          "type": "boolean",
+          "description": "Include suppressed features (default true)"
+        }
+      }
+    },
+    "outputSchema": null,
+    "icons": null,
+    "annotations": null,
+    "meta": null,
+    "execution": null
+  },
+  {
+    "name": "solidworks_rename_feature",
+    "title": null,
+    "description": "Give a feature, sketch or reference plane a meaningful name. DO THIS AS YOU BUILD — name each feature right after creating it, describing what it is for ('Mounting Boss', 'M6 Clearance Holes', 'Wall Thickness Shell') rather than what it is ('Boss-Extrude3'). A model whose timeline reads as a description of the design is dramatically easier for a later agent to modify correctly, and is what a human engineer expects to open. Renaming updates the tracked ID too, so the returned new ID replaces the old one in later calls.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Current name or tracked ID (e.g. 'Boss-Extrude1', 'feat:Boss-Extrude1', 'Sketch2')"
+        },
+        "newName": {
+          "type": "string",
+          "description": "New name. Must be unique in the document; SolidWorks rejects '@' and some punctuation."
+        }
+      },
+      "required": [
+        "name",
+        "newName"
+      ]
+    },
+    "outputSchema": null,
+    "icons": null,
+    "annotations": null,
+    "meta": null,
+    "execution": null
+  },
+  {
+    "name": "solidworks_create_feature_folder",
+    "title": null,
+    "description": "Group features into a named folder in the design tree. Use this to keep a model of any size navigable — group by function ('Mounting Features', 'Cooling Passages', 'Cosmetic Fillets'). Pass the features to collect and they are moved into a new folder; pass none to create an empty folder to fill later with move_to_folder. Folders are organisational only: they do not change build order or geometry. NOTE: folders are FLAT — SolidWorks does not support nesting one design-tree folder inside another via the API, so use several well-named top-level folders rather than a hierarchy.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "folderName": {
+          "type": "string",
+          "description": "Name for the new folder"
+        },
+        "features": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Feature names or tracked IDs to place in the folder. Omit for an empty folder."
+        },
+        "parentFolder": {
+          "type": "string",
+          "description": "NOT SUPPORTED by SolidWorks — folder nesting fails. Left in the schema so the failure is reported explicitly rather than silently ignored."
+        }
+      },
+      "required": [
+        "folderName"
+      ]
+    },
+    "outputSchema": null,
+    "icons": null,
+    "annotations": null,
+    "meta": null,
+    "execution": null
+  },
+  {
+    "name": "solidworks_move_to_folder",
+    "title": null,
+    "description": "Move existing features into an existing design-tree folder. KNOWN LIMITATION: IFeatureManager::MoveToFolder is rejected by SolidWorks 2025 in testing — into empty folders, into populated folders, and for nesting one folder in another, with either MoveAfterFolder value. Prefer create_feature_folder with the complete `features` list, which does work; that means deciding a folder's membership when you create it. This tool is kept so the failure is explicit, and because other SolidWorks builds may accept the call.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "folderName": {
+          "type": "string",
+          "description": "Destination folder name"
+        },
+        "features": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Feature names, tracked IDs, or a folder name to nest"
+        }
+      },
+      "required": [
+        "folderName",
+        "features"
+      ]
+    },
+    "outputSchema": null,
+    "icons": null,
+    "annotations": null,
+    "meta": null,
+    "execution": null
+  }
+]

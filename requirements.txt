@@ -1,0 +1,4 @@
+pywin32>=311,<400
+mcp>=1.26,<2
+Pillow>=10,<13
+jsonschema>=4.23,<5

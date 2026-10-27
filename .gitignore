@@ -1,0 +1,12 @@
+.venv/
+__pycache__/
+*.py[cod]
+*.log
+.env
+.env.*
+!.env.example
+.codex/config.toml
+config.local.json
+output/*
+!output/.gitkeep
+*.zip
