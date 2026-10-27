@@ -107,4 +107,4 @@ MCP 仅暴露原有 CAD 工具，不暴露任意 Python 执行工具。本轮测
 - `examples/`：可运行示例；`docs/`：来源、能力和验证边界。
 - `output/`：运行产物；ZIP 与 Git 源码不带本机虚拟环境、本地 MCP 配置、聊天记录或账户配置。
 
-可以将此目录中的项目文件上传到自己的 GitHub 仓库，保留 LICENSE 和 THIRD_PARTY_NOTICES.md。此交付没有上传 GitHub。首次部署需要依赖下载，ZIP 不包含 Python、SolidWorks 或离线 wheel 仓库。
+项目源码已发布到 [GitHub：yuxie809/SW-Codex-Share](https://github.com/yuxie809/SW-Codex-Share)。可通过 Code → Download ZIP 下载，或克隆仓库。再次分发时保留 LICENSE 和 THIRD_PARTY_NOTICES.md。首次部署需要依赖下载，ZIP 不包含 Python、SolidWorks 或离线 wheel 仓库。
